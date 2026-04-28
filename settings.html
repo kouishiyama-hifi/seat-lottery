@@ -350,6 +350,24 @@
     .small-reset-btn:hover { background: #fff0f0; }
     .small-reset-btn:disabled { border-color: #ccc; color: #ccc; cursor: default; background: none; }
 
+    /* ── Apply image button ── */
+    .apply-btn {
+      background: var(--blue);
+      border: none;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+
+    .apply-btn:hover { opacity: 0.8; }
+
     /* ── Save button ── */
     .save-btn {
       background: var(--yellow);
@@ -409,6 +427,20 @@
       </div>
     </div>
 
+    <div class="option-card">
+      <div class="field">
+        <label>画像 URL（省略可）</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="url" id="imageUrlInput" placeholder="https://example.com/image.png" style="flex:1;">
+          <button class="apply-btn" id="applyImageBtn" onclick="saveImageUrl()">適用</button>
+        </div>
+      </div>
+      <div id="imagePreview" style="display:none; margin-top:12px; text-align:center;">
+        <img id="previewImg" style="max-width:100%; max-height:160px; border-radius:8px; object-fit:contain;">
+        <div id="imageError" style="display:none; font-size:12px; color:#cc4444; margin-top:6px;">画像を読み込めませんでした</div>
+      </div>
+    </div>
+
     <div id="sectionList"></div>
     <button class="add-btn" onclick="addSection()">＋ セクション追加</button>
 
@@ -449,6 +481,7 @@
     function defaultSettings() {
       return {
         title: '座席抽選',
+        imageUrl: '',
         sections: [{ id: 1, prefix: 'A', separator: '-', start: 1, end: 30, zeroPad: 0 }],
         allowRepeat: false
       };
@@ -603,8 +636,9 @@
       }
 
       const allowRepeat = document.getElementById('allowRepeat').checked;
-      const title = document.getElementById('titleInput').value.trim() || '座席抽選';
-      localStorage.setItem('lotterySettings', JSON.stringify({ title, sections, allowRepeat }));
+      const title    = document.getElementById('titleInput').value.trim() || '座席抽選';
+      const imageUrl = document.getElementById('imageUrlInput').value.trim();
+      localStorage.setItem('lotterySettings', JSON.stringify({ title, imageUrl, sections, allowRepeat }));
       window.location.href = 'index.html';
     }
 
@@ -695,10 +729,44 @@
       sections = settings.sections.map(s => ({ ...s }));
       nextId   = Math.max(...sections.map(s => s.id), 0);
       document.getElementById('allowRepeat').checked = !!settings.allowRepeat;
-      document.getElementById('titleInput').value = settings.title || '座席抽選';
+      document.getElementById('titleInput').value    = settings.title    || '座席抽選';
+      document.getElementById('imageUrlInput').value = settings.imageUrl || '';
+      updateImagePreview(settings.imageUrl || '');
       render();
       renderStatus();
     }
+
+    // ── Image URL apply (履歴リセットなし) ──────────────────────────────────
+
+    function saveImageUrl() {
+      const url = document.getElementById('imageUrlInput').value.trim();
+      const raw = localStorage.getItem('lotterySettings');
+      const settings = raw ? JSON.parse(raw) : defaultSettings();
+      settings.imageUrl = url;
+      localStorage.setItem('lotterySettings', JSON.stringify(settings));
+      const btn = document.getElementById('applyImageBtn');
+      btn.textContent = '✓ 保存';
+      setTimeout(() => { btn.textContent = '適用'; }, 1500);
+    }
+
+    // ── Image preview ────────────────────────────────────────────────────────
+
+    function updateImagePreview(url) {
+      const wrap  = document.getElementById('imagePreview');
+      const img   = document.getElementById('previewImg');
+      const err   = document.getElementById('imageError');
+      if (!url) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      err.style.display  = 'none';
+      img.style.display  = 'block';
+      img.src = url;
+      img.onerror = () => { img.style.display = 'none'; err.style.display = 'block'; };
+      img.onload  = () => { img.style.display = 'block'; err.style.display = 'none'; };
+    }
+
+    document.getElementById('imageUrlInput').addEventListener('input', e => {
+      updateImagePreview(e.target.value.trim());
+    });
 
     // 席グリッドのタップで除外トグル
     document.getElementById('seatGrid').addEventListener('click', e => {

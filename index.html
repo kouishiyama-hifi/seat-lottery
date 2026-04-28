@@ -57,6 +57,14 @@
       }
     }
 
+    .hero-image {
+      display: none;
+      width: 100%;
+      max-height: 180px;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+
     .title {
       font-size: 28px;
       font-weight: 800;
@@ -193,6 +201,7 @@
 </head>
 <body>
   <div class="card">
+    <img class="hero-image" id="heroImage" alt="">
     <div class="title" id="pageTitle"></div>
     <div class="result-box">
       <div class="result-text empty" id="result">－</div>
@@ -387,9 +396,15 @@
 
     // ── Init ─────────────────────────────────────────────────────────────────
     function init() {
-      const raw = localStorage.getItem('lotterySettings');
+      const raw      = localStorage.getItem('lotterySettings');
       const settings = raw ? JSON.parse(raw) : defaultSettings();
       document.getElementById('pageTitle').textContent = settings.title || '座席抽選';
+      const heroImg = document.getElementById('heroImage');
+      if (settings.imageUrl) {
+        heroImg.src          = settings.imageUrl;
+        heroImg.style.display = 'block';
+        heroImg.onerror      = () => { heroImg.style.display = 'none'; };
+      }
       updateUI();
     }
 
