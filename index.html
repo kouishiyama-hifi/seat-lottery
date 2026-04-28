@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>座席抽選</title>
+  <style>
+    :root {
+      --yellow: #FFD84D;
+      --blue:   #5AC8FA;
+      --dark:   #111111;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #E8E8E8;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif;
+    }
+
+    .card {
+      background: var(--yellow);
+      border-radius: 20px;
+      padding: 28px;
+      width: min(400px, 92vw);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.18);
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--dark);
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Result box ── */
+    .result-box {
+      background: #ffffff;
+      border-radius: 12px;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .result-text {
+      font-weight: 800;
+      font-size: 88px;
+      color: var(--dark);
+      letter-spacing: -1px;
+      user-select: none;
+      transition: font-size 0.08s;
+    }
+
+    .result-text.empty {
+      font-size: 72px;
+      font-weight: 300;
+      color: #888;
+      letter-spacing: 0;
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.6); opacity: 0; }
+      65%  { transform: scale(1.1); }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    .result-text.popped {
+      animation: popIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* ── Draw button ── */
+    .draw-btn {
+      background: var(--blue);
+      border: none;
+      border-radius: 12px;
+      padding: 26px 0;
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: 8px;
+      color: var(--dark);
+      cursor: pointer;
+      width: 100%;
+      font-family: inherit;
+      box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .draw-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 0 rgba(0,0,0,0.15);
+    }
+
+    .draw-btn:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+    }
+
+    .draw-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* ── No seats banner ── */
+    .no-seats {
+      display: none;
+      background: rgba(0,0,0,0.06);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #444;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .remaining {
+      font-size: 13px;
+      color: #444;
+    }
+
+    .reset-btn {
+      background: none;
+      border: 1px solid #888;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      color: #555;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .reset-btn:hover { background: rgba(0,0,0,0.08); }
+
+    .settings-link {
+      font-size: 13px;
+      color: #444;
+      text-decoration: none;
+    }
+
+    .settings-link:hover { color: #000; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="title" id="pageTitle"></div>
+    <div class="result-box">
+      <div class="result-text empty" id="result">－</div>
+    </div>
+
+    <div class="no-seats" id="noSeats">
+      抽選できる座席がありません。<br>リセットしてください。
+    </div>
+
+    <button class="draw-btn" id="drawBtn" onclick="startDraw()">抽選</button>
+
+    <div class="footer">
+      <div class="footer-left">
+        <span class="remaining" id="remaining"></span>
+      </div>
+      <a class="settings-link" href="settings.html">⚙ 設定</a>
+    </div>
+  </div>
+
+  <script>
+    // ── Defaults & helpers ────────────────────────────────────────────────────
+
+    function defaultSettings() {
+      return {
+        sections: [{ id: 1, prefix: 'A', separator: '-', start: 1, end: 30, zeroPad: 0 }],
+        allowRepeat: false
+      };
+    }
+
+    function generateSeats(sections) {
+      const seats = [];
+      for (const s of sections) {
+        const start = parseInt(s.start) || 1;
+        const end   = parseInt(s.end)   || 1;
+        const pad   = parseInt(s.zeroPad) || 0;
+        for (let n = start; n <= end; n++) {
+          const num  = pad > 0 ? String(n).padStart(pad, '0') : String(n);
+          const seat = s.prefix ? `${s.prefix}${s.separator}${num}` : num;
+          seats.push(seat);
+        }
+      }
+      return seats;
+    }
+
+    function loadState() {
+      const raw      = localStorage.getItem('lotterySettings');
+      const settings = raw ? JSON.parse(raw) : defaultSettings();
+      const allSeats = generateSeats(settings.sections);
+      const drawnRaw = localStorage.getItem('drawnSeats');
+      const drawn    = new Set(drawnRaw ? JSON.parse(drawnRaw) : []);
+      return { settings, allSeats, drawn };
+    }
+
+    function setFontSize(el, text) {
+      const len = text.length;
+      if      (len <= 2) el.style.fontSize = '96px';
+      else if (len <= 4) el.style.fontSize = '88px';
+      else if (len <= 6) el.style.fontSize = '72px';
+      else if (len <= 8) el.style.fontSize = '56px';
+      else               el.style.fontSize = '42px';
+    }
+
+    // ── UI ───────────────────────────────────────────────────────────────────
+
+    function updateUI() {
+      const { settings, allSeats, drawn } = loadState();
+      const available = settings.allowRepeat
+        ? allSeats.length
+        : allSeats.filter(s => !drawn.has(s)).length;
+
+      const remainingEl = document.getElementById('remaining');
+      const resetBtn    = document.getElementById('resetBtn');
+      const noSeats     = document.getElementById('noSeats');
+      const drawBtn     = document.getElementById('drawBtn');
+
+      if (settings.allowRepeat) {
+        remainingEl.textContent = `全 ${allSeats.length} 席`;
+        resetBtn.style.display  = 'none';
+      } else {
+        remainingEl.textContent = `残り ${available} / ${allSeats.length} 席`;
+        resetBtn.style.display  = drawn.size > 0 ? 'inline-block' : 'none';
+      }
+
+      const exhausted = !settings.allowRepeat && available === 0 && allSeats.length > 0;
+      noSeats.style.display = exhausted ? 'block' : 'none';
+      drawBtn.style.display = exhausted ? 'none'  : 'block';
+    }
+
+    // ── Animation ────────────────────────────────────────────────────────────
+
+    let isAnimating = false;
+
+    function startDraw() {
+      if (isAnimating) return;
+
+      const { settings, allSeats, drawn } = loadState();
+      const available = settings.allowRepeat
+        ? [...allSeats]
+        : allSeats.filter(s => !drawn.has(s));
+
+      if (available.length === 0) { updateUI(); return; }
+
+      const finalSeat = available[Math.floor(Math.random() * available.length)];
+      runAnimation(finalSeat, allSeats.length > 0 ? allSeats : available, settings, drawn);
+    }
+
+    function runAnimation(finalSeat, pool, settings, drawn) {
+      isAnimating = true;
+      const resultEl = document.getElementById('result');
+      const drawBtn  = document.getElementById('drawBtn');
+
+      drawBtn.disabled = true;
+      resultEl.classList.remove('empty', 'popped');
+
+      // Gradually increasing delays = decelerating slot machine
+      const delays = [50, 55, 60, 65, 70, 75, 80, 90, 105, 120, 145, 175, 215, 265, 330, 420];
+
+      function step(i) {
+        if (i >= delays.length) {
+          resultEl.classList.remove('popped');
+          void resultEl.offsetWidth; // restart animation
+          resultEl.textContent = finalSeat;
+          setFontSize(resultEl, finalSeat);
+          resultEl.classList.add('popped');
+          playWinSE();
+
+          if (!settings.allowRepeat) {
+            drawn.add(finalSeat);
+            localStorage.setItem('drawnSeats', JSON.stringify([...drawn]));
+          }
+
+          drawBtn.disabled = false;
+          isAnimating = false;
+          updateUI();
+          return;
+        }
+
+        setTimeout(() => {
+          const rand = pool[Math.floor(Math.random() * pool.length)];
+          resultEl.textContent = rand;
+          setFontSize(resultEl, rand);
+          step(i + 1);
+        }, delays[i]);
+      }
+
+      step(0);
+    }
+
+    // ── Sound effect ─────────────────────────────────────────────────────────
+
+    function playWinSE() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // 3音のファンファーレ: C5 → E5 → G5
+      const notes = [
+        { freq: 523.25, start: 0,    dur: 0.18 },
+        { freq: 659.25, start: 0.16, dur: 0.18 },
+        { freq: 783.99, start: 0.32, dur: 0.38 },
+      ];
+
+      notes.forEach(({ freq, start, dur }) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type      = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+
+        gain.gain.setValueAtTime(0, ctx.currentTime + start);
+        gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + dur);
+      });
+    }
+
+    // ── Reset ────────────────────────────────────────────────────────────────
+
+    function resetDrawn() {
+      if (!confirm('抽選履歴をリセットしますか？')) return;
+      localStorage.removeItem('drawnSeats');
+      const resultEl      = document.getElementById('result');
+      resultEl.textContent = '－';
+      resultEl.className   = 'result-text empty';
+      resultEl.style.fontSize = '';
+      updateUI();
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    function init() {
+      const raw = localStorage.getItem('lotterySettings');
+      const settings = raw ? JSON.parse(raw) : defaultSettings();
+      document.getElementById('pageTitle').textContent = settings.title || '座席抽選';
+      updateUI();
+    }
+
+    init();
+  </script>
+</body>
+</html>

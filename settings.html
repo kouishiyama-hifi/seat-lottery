@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設定 - 座席抽選</title>
+  <style>
+    :root {
+      --yellow: #FFD84D;
+      --blue:   #5AC8FA;
+      --dark:   #111111;
+      --bg:     #E8E8E8;
+      --card:   #ffffff;
+      --border: #D8D8D8;
+      --muted:  #888;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      min-height: 100dvh;
+      font-family: -apple-system, 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif;
+      color: var(--dark);
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--yellow);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .back-link {
+      font-size: 14px;
+      color: #444;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .back-link:hover { color: #000; }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* ── Page body ── */
+    .page {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Section card ── */
+    .section-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      font-size: 13px;
+      color: #cc4444;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: inherit;
+    }
+
+    .delete-btn:hover { background: #fff0f0; }
+    .delete-btn:disabled { color: #ccc; cursor: default; background: none; }
+
+    /* ── Form rows ── */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--dark);
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--blue);
+      background: #fff;
+    }
+
+    input::placeholder { color: #bbb; }
+
+    /* ── Preview chip ── */
+    .preview {
+      background: #f4f4f4;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .preview strong { color: var(--dark); }
+
+    /* ── Add section ── */
+    .add-btn {
+      background: none;
+      border: 2px dashed #C0C0C0;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #888;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .add-btn:hover { border-color: #999; color: #444; }
+
+    /* ── Option card ── */
+    .option-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toggle-label-text {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .toggle-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap {
+      position: relative;
+      width: 44px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #ccc;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle-wrap input:checked + .toggle-track { background: var(--blue); }
+    .toggle-wrap input:checked + .toggle-track::after { transform: translateX(18px); }
+
+    /* ── Status card ── */
+    .status-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-summary {
+      display: flex;
+      gap: 16px;
+    }
+
+    .stat-block {
+      text-align: center;
+      flex: 1;
+      background: #f4f4f4;
+      border-radius: 10px;
+      padding: 10px 8px;
+    }
+
+    .stat-num {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-num.remaining { color: #1a9f4e; }
+    .stat-num.drawn     { color: #cc4444; }
+    .stat-num.total     { color: #555; }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .seat-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .seat-chip {
+      background: #e8f7ff;
+      border: 1.5px solid var(--blue);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--dark);
+      white-space: nowrap;
+    }
+
+    .seat-chip.drawn {
+      background: #f0f0f0;
+      border-color: #ccc;
+      color: #bbb;
+      text-decoration: line-through;
+    }
+
+    .no-history {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .small-reset-btn {
+      background: none;
+      border: 1px solid #cc4444;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: #cc4444;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .small-reset-btn:hover { background: #fff0f0; }
+    .small-reset-btn:disabled { border-color: #ccc; color: #ccc; cursor: default; background: none; }
+
+    /* ── Save button ── */
+    .save-btn {
+      background: var(--yellow);
+      border: none;
+      border-radius: 14px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--dark);
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.12);
+    }
+
+    .save-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.12);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #222;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 99px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a class="back-link" href="index.html">← 戻る</a>
+    <h1>座席設定</h1>
+  </div>
+
+  <div class="page">
+    <div class="option-card">
+      <div class="field">
+        <label>タイトル</label>
+        <input type="text" id="titleInput" placeholder="例: 座席抽選" maxlength="40">
+      </div>
+    </div>
+
+    <div id="sectionList"></div>
+    <button class="add-btn" onclick="addSection()">＋ セクション追加</button>
+
+    <div class="option-card">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label-text">抽選済みを再抽選に含める</div>
+          <div class="toggle-sub">ONにすると同じ座席が複数回抽選されます</div>
+        </div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="allowRepeat">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="status-card">
+      <div class="status-header">
+        <span class="section-title">残席状況</span>
+        <button class="small-reset-btn" id="statusResetBtn" onclick="resetDrawnFromSettings()">履歴リセット</button>
+      </div>
+      <div class="status-summary" id="statusSummary"></div>
+      <div class="seat-grid" id="seatGrid"></div>
+    </div>
+
+    <button class="save-btn" onclick="saveSettings()">設定を保存</button>
+  </div>
+
+  <div class="toast" id="toast">保存しました</div>
+
+  <script>
+    // ── State ────────────────────────────────────────────────────────────────
+
+    let sections = [];
+    let nextId   = 1;
+
+    function defaultSettings() {
+      return {
+        title: '座席抽選',
+        sections: [{ id: 1, prefix: 'A', separator: '-', start: 1, end: 30, zeroPad: 0 }],
+        allowRepeat: false
+      };
+    }
+
+    // ── Seat generation (for preview) ────────────────────────────────────────
+
+    function generateSeats(s) {
+      const start = parseInt(s.start) || 1;
+      const end   = parseInt(s.end)   || 1;
+      const pad   = parseInt(s.zeroPad) || 0;
+      const seats = [];
+      for (let n = start; n <= end; n++) {
+        const num  = pad > 0 ? String(n).padStart(pad, '0') : String(n);
+        const seat = s.prefix ? `${s.prefix}${s.separator}${num}` : num;
+        seats.push(seat);
+      }
+      return seats;
+    }
+
+    function previewText(s) {
+      const seats = generateSeats(s);
+      if (seats.length === 0) return '（座席なし）';
+      const count = seats.length;
+      if (count <= 6) return `${seats.join(', ')}　（${count} 席）`;
+      const head = seats.slice(0, 3).join(', ');
+      const tail = seats.slice(-2).join(', ');
+      return `${head}, … , ${tail}　（${count} 席）`;
+    }
+
+    // ── Render ───────────────────────────────────────────────────────────────
+
+    function render() {
+      const list = document.getElementById('sectionList');
+      list.innerHTML = '';
+
+      sections.forEach((s, idx) => {
+        const card = document.createElement('div');
+        card.className  = 'section-card';
+        card.dataset.id = s.id;
+
+        card.innerHTML = `
+          <div class="section-header">
+            <span class="section-title">セクション ${idx + 1}</span>
+            <button class="delete-btn" onclick="removeSection(${s.id})"
+              ${sections.length === 1 ? 'disabled' : ''}>削除</button>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>プレフィックス</label>
+              <input type="text" placeholder="例: A, VIP（省略可）"
+                value="${esc(s.prefix)}"
+                oninput="updateField(${s.id}, 'prefix', this.value)">
+            </div>
+            <div class="field">
+              <label>区切り文字</label>
+              <input type="text" placeholder="例: - （省略可）"
+                value="${esc(s.separator)}"
+                oninput="updateField(${s.id}, 'separator', this.value)">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>開始番号</label>
+              <input type="number" min="0" value="${s.start}"
+                oninput="updateField(${s.id}, 'start', this.value)">
+            </div>
+            <div class="field">
+              <label>終了番号</label>
+              <input type="number" min="0" value="${s.end}"
+                oninput="updateField(${s.id}, 'end', this.value)">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>桁数揃え（ゼロ埋め）</label>
+              <select onchange="updateField(${s.id}, 'zeroPad', this.value)">
+                <option value="0"  ${s.zeroPad == 0 ? 'selected' : ''}>なし（1, 2, 3…）</option>
+                <option value="2"  ${s.zeroPad == 2 ? 'selected' : ''}>2桁（01, 02…）</option>
+                <option value="3"  ${s.zeroPad == 3 ? 'selected' : ''}>3桁（001, 002…）</option>
+                <option value="4"  ${s.zeroPad == 4 ? 'selected' : ''}>4桁（0001, 0002…）</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="preview" id="preview-${s.id}"></div>
+        `;
+
+        list.appendChild(card);
+        updatePreview(s.id);
+      });
+    }
+
+    function updatePreview(id) {
+      const s   = sections.find(x => x.id === id);
+      const el  = document.getElementById(`preview-${id}`);
+      if (!s || !el) return;
+      el.innerHTML = `<strong>プレビュー:</strong> ${previewText(s)}`;
+    }
+
+    function esc(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    }
+
+    // ── Mutations ────────────────────────────────────────────────────────────
+
+    function updateField(id, key, value) {
+      const s = sections.find(x => x.id === id);
+      if (!s) return;
+      s[key] = key === 'start' || key === 'end' || key === 'zeroPad'
+        ? parseInt(value) || 0
+        : value;
+      updatePreview(id);
+    }
+
+    function addSection() {
+      nextId++;
+      sections.push({ id: nextId, prefix: '', separator: '-', start: 1, end: 30, zeroPad: 0 });
+      render();
+      // Scroll new card into view
+      const cards = document.querySelectorAll('.section-card');
+      cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function removeSection(id) {
+      if (sections.length === 1) return;
+      sections = sections.filter(s => s.id !== id);
+      render();
+    }
+
+    // ── Persist ───────────────────────────────────────────────────────────────
+
+    function saveSettings() {
+      // Validate
+      for (const s of sections) {
+        if (parseInt(s.start) > parseInt(s.end)) {
+          alert(`セクション「${s.prefix || '#' + s.id}」の開始番号が終了番号より大きいです。`);
+          return;
+        }
+      }
+
+      const hadDrawn = !!localStorage.getItem('drawnSeats');
+      if (hadDrawn) {
+        const ok = confirm('設定を変更すると抽選履歴がリセットされます。続けますか？');
+        if (!ok) return;
+        localStorage.removeItem('drawnSeats');
+      }
+
+      const allowRepeat = document.getElementById('allowRepeat').checked;
+      const title = document.getElementById('titleInput').value.trim() || '座席抽選';
+      localStorage.setItem('lotterySettings', JSON.stringify({ title, sections, allowRepeat }));
+      window.location.href = 'index.html';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ── Status panel ─────────────────────────────────────────────────────────
+
+    function allSeatsFromStorage() {
+      const raw      = localStorage.getItem('lotterySettings');
+      const settings = raw ? JSON.parse(raw) : defaultSettings();
+      return settings.sections.flatMap(s => generateSeats(s));
+    }
+
+    function renderStatus() {
+      const allSeats = allSeatsFromStorage();
+      const drawnRaw = localStorage.getItem('drawnSeats');
+      const drawn    = new Set(drawnRaw ? JSON.parse(drawnRaw) : []);
+
+      const total     = allSeats.length;
+      const drawnCnt  = allSeats.filter(s => drawn.has(s)).length;
+      const remaining = total - drawnCnt;
+
+      // Summary numbers
+      document.getElementById('statusSummary').innerHTML = `
+        <div class="stat-block">
+          <div class="stat-num remaining">${remaining}</div>
+          <div class="stat-label">残り</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num drawn">${drawnCnt}</div>
+          <div class="stat-label">抽選済み</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num total">${total}</div>
+          <div class="stat-label">合計</div>
+        </div>
+      `;
+
+      // Seat chips
+      const grid = document.getElementById('seatGrid');
+      if (total === 0) {
+        grid.innerHTML = '<div class="no-history">座席が設定されていません</div>';
+      } else {
+        grid.innerHTML = allSeats.map(seat =>
+          `<span class="seat-chip ${drawn.has(seat) ? 'drawn' : ''}">${seat}</span>`
+        ).join('');
+      }
+
+      // Reset button: disable when nothing drawn
+      document.getElementById('statusResetBtn').disabled = drawnCnt === 0;
+    }
+
+    function resetDrawnFromSettings() {
+      if (!confirm('抽選履歴をリセットしますか？')) return;
+      localStorage.removeItem('drawnSeats');
+      renderStatus();
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+
+    function init() {
+      const raw      = localStorage.getItem('lotterySettings');
+      const settings = raw ? JSON.parse(raw) : defaultSettings();
+      sections = settings.sections.map(s => ({ ...s }));
+      nextId   = Math.max(...sections.map(s => s.id), 0);
+      document.getElementById('allowRepeat').checked = !!settings.allowRepeat;
+      document.getElementById('titleInput').value = settings.title || '座席抽選';
+      render();
+      renderStatus();
+    }
+
+    init();
+  </script>
+</body>
+</html>
