@@ -254,8 +254,9 @@
     }
 
     .status-summary {
-      display: flex;
-      gap: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
     }
 
     .stat-block {
@@ -274,6 +275,7 @@
 
     .stat-num.remaining { color: #1a9f4e; }
     .stat-num.drawn     { color: #cc4444; }
+    .stat-num.excluded  { color: #E65100; }
     .stat-num.total     { color: #555; }
 
     .stat-label {
@@ -299,13 +301,32 @@
       font-weight: 600;
       color: var(--dark);
       white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.1s;
     }
+
+    .seat-chip:hover:not(.drawn) { opacity: 0.75; }
 
     .seat-chip.drawn {
       background: #f0f0f0;
       border-color: #ccc;
       color: #bbb;
       text-decoration: line-through;
+      cursor: default;
+    }
+
+    .seat-chip.excluded {
+      background: #fff3e0;
+      border-color: #FFA726;
+      color: #E65100;
+      text-decoration: line-through;
+    }
+
+    .grid-hint {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
     }
 
     .no-history {
@@ -411,6 +432,7 @@
       </div>
       <div class="status-summary" id="statusSummary"></div>
       <div class="seat-grid" id="seatGrid"></div>
+      <div class="grid-hint">タップで除外 / 再タップで解除</div>
     </div>
 
     <button class="save-btn" onclick="saveSettings()">設定を保存</button>
@@ -571,11 +593,13 @@
         }
       }
 
-      const hadDrawn = !!localStorage.getItem('drawnSeats');
-      if (hadDrawn) {
-        const ok = confirm('設定を変更すると抽選履歴がリセットされます。続けますか？');
+      const hadDrawn    = !!localStorage.getItem('drawnSeats');
+      const hadExcluded = !!localStorage.getItem('excludedSeats');
+      if (hadDrawn || hadExcluded) {
+        const ok = confirm('設定を変更すると抽選履歴・除外リストがリセットされます。続けますか？');
         if (!ok) return;
         localStorage.removeItem('drawnSeats');
+        localStorage.removeItem('excludedSeats');
       }
 
       const allowRepeat = document.getElementById('allowRepeat').checked;
@@ -600,15 +624,17 @@
     }
 
     function renderStatus() {
-      const allSeats = allSeatsFromStorage();
-      const drawnRaw = localStorage.getItem('drawnSeats');
-      const drawn    = new Set(drawnRaw ? JSON.parse(drawnRaw) : []);
+      const allSeats   = allSeatsFromStorage();
+      const drawnRaw   = localStorage.getItem('drawnSeats');
+      const drawn      = new Set(drawnRaw ? JSON.parse(drawnRaw) : []);
+      const excludedRaw = localStorage.getItem('excludedSeats');
+      const excluded   = new Set(excludedRaw ? JSON.parse(excludedRaw) : []);
 
-      const total     = allSeats.length;
-      const drawnCnt  = allSeats.filter(s => drawn.has(s)).length;
-      const remaining = total - drawnCnt;
+      const total      = allSeats.length;
+      const drawnCnt   = allSeats.filter(s => drawn.has(s)).length;
+      const excludedCnt = allSeats.filter(s => excluded.has(s) && !drawn.has(s)).length;
+      const remaining  = total - drawnCnt - excludedCnt;
 
-      // Summary numbers
       document.getElementById('statusSummary').innerHTML = `
         <div class="stat-block">
           <div class="stat-num remaining">${remaining}</div>
@@ -619,23 +645,40 @@
           <div class="stat-label">抽選済み</div>
         </div>
         <div class="stat-block">
+          <div class="stat-num excluded">${excludedCnt}</div>
+          <div class="stat-label">除外</div>
+        </div>
+        <div class="stat-block">
           <div class="stat-num total">${total}</div>
           <div class="stat-label">合計</div>
         </div>
       `;
 
-      // Seat chips
       const grid = document.getElementById('seatGrid');
       if (total === 0) {
         grid.innerHTML = '<div class="no-history">座席が設定されていません</div>';
       } else {
-        grid.innerHTML = allSeats.map(seat =>
-          `<span class="seat-chip ${drawn.has(seat) ? 'drawn' : ''}">${seat}</span>`
-        ).join('');
+        grid.innerHTML = allSeats.map(seat => {
+          const isDrawn    = drawn.has(seat);
+          const isExcluded = !isDrawn && excluded.has(seat);
+          const cls = isDrawn ? 'drawn' : isExcluded ? 'excluded' : '';
+          return `<span class="seat-chip ${cls}" data-seat="${seat}">${seat}</span>`;
+        }).join('');
       }
 
-      // Reset button: disable when nothing drawn
       document.getElementById('statusResetBtn').disabled = drawnCnt === 0;
+    }
+
+    function toggleExclude(seat) {
+      const drawnRaw = localStorage.getItem('drawnSeats');
+      const drawn    = new Set(drawnRaw ? JSON.parse(drawnRaw) : []);
+      if (drawn.has(seat)) return; // 抽選済みは除外不可
+
+      const excludedRaw = localStorage.getItem('excludedSeats');
+      const excluded    = new Set(excludedRaw ? JSON.parse(excludedRaw) : []);
+      excluded.has(seat) ? excluded.delete(seat) : excluded.add(seat);
+      localStorage.setItem('excludedSeats', JSON.stringify([...excluded]));
+      renderStatus();
     }
 
     function resetDrawnFromSettings() {
@@ -656,6 +699,12 @@
       render();
       renderStatus();
     }
+
+    // 席グリッドのタップで除外トグル
+    document.getElementById('seatGrid').addEventListener('click', e => {
+      const chip = e.target.closest('.seat-chip');
+      if (chip && !chip.classList.contains('drawn')) toggleExclude(chip.dataset.seat);
+    });
 
     init();
   </script>

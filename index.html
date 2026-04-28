@@ -92,6 +92,11 @@
       letter-spacing: 0;
     }
 
+    .result-text.rolling {
+      color: #BBBBBB;
+      transition: color 0.1s;
+    }
+
     @keyframes popIn {
       0%   { transform: scale(0.6); opacity: 0; }
       65%  { transform: scale(1.1); }
@@ -233,12 +238,15 @@
     }
 
     function loadState() {
-      const raw      = localStorage.getItem('lotterySettings');
-      const settings = raw ? JSON.parse(raw) : defaultSettings();
-      const allSeats = generateSeats(settings.sections);
-      const drawnRaw = localStorage.getItem('drawnSeats');
-      const drawn    = new Set(drawnRaw ? JSON.parse(drawnRaw) : []);
-      return { settings, allSeats, drawn };
+      const raw         = localStorage.getItem('lotterySettings');
+      const settings    = raw ? JSON.parse(raw) : defaultSettings();
+      const allSeats    = generateSeats(settings.sections);
+      const drawnRaw    = localStorage.getItem('drawnSeats');
+      const drawn       = new Set(drawnRaw ? JSON.parse(drawnRaw) : []);
+      const excludedRaw = localStorage.getItem('excludedSeats');
+      const excluded    = new Set(excludedRaw ? JSON.parse(excludedRaw) : []);
+      const activeSeats = allSeats.filter(s => !excluded.has(s));
+      return { settings, allSeats, activeSeats, drawn };
     }
 
     function setFontSize(el, text) {
@@ -253,25 +261,22 @@
     // ── UI ───────────────────────────────────────────────────────────────────
 
     function updateUI() {
-      const { settings, allSeats, drawn } = loadState();
+      const { settings, activeSeats, drawn } = loadState();
       const available = settings.allowRepeat
-        ? allSeats.length
-        : allSeats.filter(s => !drawn.has(s)).length;
+        ? activeSeats.length
+        : activeSeats.filter(s => !drawn.has(s)).length;
 
       const remainingEl = document.getElementById('remaining');
-      const resetBtn    = document.getElementById('resetBtn');
       const noSeats     = document.getElementById('noSeats');
       const drawBtn     = document.getElementById('drawBtn');
 
       if (settings.allowRepeat) {
-        remainingEl.textContent = `全 ${allSeats.length} 席`;
-        resetBtn.style.display  = 'none';
+        remainingEl.textContent = `全 ${activeSeats.length} 席`;
       } else {
-        remainingEl.textContent = `残り ${available} / ${allSeats.length} 席`;
-        resetBtn.style.display  = drawn.size > 0 ? 'inline-block' : 'none';
+        remainingEl.textContent = `残り ${available} / ${activeSeats.length} 席`;
       }
 
-      const exhausted = !settings.allowRepeat && available === 0 && allSeats.length > 0;
+      const exhausted = !settings.allowRepeat && available === 0 && activeSeats.length > 0;
       noSeats.style.display = exhausted ? 'block' : 'none';
       drawBtn.style.display = exhausted ? 'none'  : 'block';
     }
@@ -283,15 +288,15 @@
     function startDraw() {
       if (isAnimating) return;
 
-      const { settings, allSeats, drawn } = loadState();
+      const { settings, activeSeats, drawn } = loadState();
       const available = settings.allowRepeat
-        ? [...allSeats]
-        : allSeats.filter(s => !drawn.has(s));
+        ? [...activeSeats]
+        : activeSeats.filter(s => !drawn.has(s));
 
       if (available.length === 0) { updateUI(); return; }
 
       const finalSeat = available[Math.floor(Math.random() * available.length)];
-      runAnimation(finalSeat, allSeats.length > 0 ? allSeats : available, settings, drawn);
+      runAnimation(finalSeat, activeSeats.length > 0 ? activeSeats : available, settings, drawn);
     }
 
     function runAnimation(finalSeat, pool, settings, drawn) {
@@ -301,13 +306,14 @@
 
       drawBtn.disabled = true;
       resultEl.classList.remove('empty', 'popped');
+      resultEl.classList.add('rolling');
 
       // Gradually increasing delays = decelerating slot machine
       const delays = [50, 55, 60, 65, 70, 75, 80, 90, 105, 120, 145, 175, 215, 265, 330, 420];
 
       function step(i) {
         if (i >= delays.length) {
-          resultEl.classList.remove('popped');
+          resultEl.classList.remove('rolling', 'popped');
           void resultEl.offsetWidth; // restart animation
           resultEl.textContent = finalSeat;
           setFontSize(resultEl, finalSeat);
