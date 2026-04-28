@@ -33,6 +33,25 @@
       box-shadow: 0 12px 48px rgba(0,0,0,0.18);
     }
 
+    @media (max-width: 480px) {
+      body {
+        background: var(--yellow);
+        align-items: flex-start;
+      }
+      .card {
+        width: 100%;
+        min-height: 100dvh;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 48px 24px 32px;
+        justify-content: center;
+      }
+      .draw-btn {
+        padding: 64px 0;
+        font-size: 52px;
+      }
+    }
+
     .title {
       font-size: 28px;
       font-weight: 800;
