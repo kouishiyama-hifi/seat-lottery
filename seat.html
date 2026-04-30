@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>席番号確認</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #E8E8E8;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif;
+    }
+
+    .card {
+      background: #FFD84D;
+      border-radius: 24px;
+      padding: 52px 40px;
+      text-align: center;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.16);
+      width: min(360px, 90vw);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .label {
+      font-size: 18px;
+      font-weight: 500;
+      color: #444;
+    }
+
+    .seat-number {
+      font-size: 80px;
+      font-weight: 800;
+      color: #111;
+      letter-spacing: -2px;
+      line-height: 1.1;
+    }
+
+    .suffix {
+      font-size: 18px;
+      font-weight: 500;
+      color: #444;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #777;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    /* スマホ全画面 */
+    @media (max-width: 480px) {
+      body { background: #FFD84D; align-items: center; }
+      .card { border-radius: 0; box-shadow: none; width: 100%; min-height: 100dvh; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="label">あなたの席番号は</div>
+    <div class="seat-number" id="seat">—</div>
+    <div class="suffix">です</div>
+    <div class="note">※スクリーンショット等でページを保存してお使いください</div>
+  </div>
+
+  <script>
+    const seat = new URLSearchParams(window.location.search).get('seat') || '—';
+    const el = document.getElementById('seat');
+    el.textContent = seat;
+    // 文字数でフォントサイズ調整
+    const len = seat.length;
+    if      (len <= 2) el.style.fontSize = '96px';
+    else if (len <= 4) el.style.fontSize = '80px';
+    else if (len <= 6) el.style.fontSize = '64px';
+    else if (len <= 8) el.style.fontSize = '52px';
+    else               el.style.fontSize = '40px';
+  </script>
+</body>
+</html>
