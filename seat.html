@@ -18,11 +18,20 @@
 
     .card {
       background: #FFD84D;
+      min-height: 100dvh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .inner {
+      background: #ffffff;
       border-radius: 24px;
       padding: 52px 40px;
       text-align: center;
-      box-shadow: 0 12px 48px rgba(0,0,0,0.16);
-      width: min(360px, 90vw);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      width: min(320px, 84vw);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -56,19 +65,19 @@
       line-height: 1.6;
     }
 
-    /* スマホ全画面 */
     @media (max-width: 480px) {
-      body { background: #FFD84D; align-items: center; }
-      .card { border-radius: 0; box-shadow: none; width: 100%; min-height: 100dvh; justify-content: center; }
+      body { background: #FFD84D; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="label">あなたの席番号は</div>
-    <div class="seat-number" id="seat">—</div>
-    <div class="suffix">です</div>
-    <div class="note">※スクリーンショット等でページを保存してお使いください</div>
+    <div class="inner">
+      <div class="label">あなたの席番号は</div>
+      <div class="seat-number" id="seat">—</div>
+      <div class="suffix">です</div>
+      <div class="note">※スクリーンショット等でページを保存してお使いください</div>
+    </div>
   </div>
 
   <script>
