@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>操作マニュアル - 座席抽選</title>
+  <style>
+    :root {
+      --yellow: #FFD84D;
+      --blue:   #5AC8FA;
+      --dark:   #111111;
+      --bg:     #E8E8E8;
+      --card:   #ffffff;
+      --border: #D8D8D8;
+      --muted:  #888;
+      --green:  #1a9f4e;
+      --red:    #cc4444;
+      --orange: #E65100;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      min-height: 100dvh;
+      font-family: -apple-system, 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif;
+      color: var(--dark);
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--yellow);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .back-link {
+      font-size: 14px;
+      color: #444;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .back-link:hover { color: #000; }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* ── Page body ── */
+    .page {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 28px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── TOC ── */
+    .toc-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .toc-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .toc-list li a {
+      font-size: 14px;
+      color: #444;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toc-list li a:hover { color: #000; text-decoration: underline; }
+
+    .toc-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: var(--yellow);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+      color: #555;
+      flex-shrink: 0;
+    }
+
+    /* ── Section heading ── */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0 2px;
+      scroll-margin-top: 72px;
+    }
+
+    .section-heading .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--dark);
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .section-heading h2 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    /* ── Content card ── */
+    .content-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Step rows ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background: var(--blue);
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--dark);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-body {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #333;
+    }
+
+    .step-body strong {
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    /* ── Field table ── */
+    .field-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    .field-table th {
+      background: #f4f4f4;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 12px;
+      color: #555;
+      border-bottom: 1.5px solid #e0e0e0;
+    }
+
+    .field-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .field-table tr:last-child td { border-bottom: none; }
+
+    .field-table td:first-child {
+      font-weight: 600;
+      white-space: nowrap;
+      color: var(--dark);
+      width: 36%;
+    }
+
+    /* ── Tag badges ── */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tag-blue   { background: #e8f7ff; color: #0077aa; border: 1px solid var(--blue); }
+    .tag-green  { background: #e8f8ee; color: #1a7040; border: 1px solid #78c99a; }
+    .tag-orange { background: #fff3e0; color: var(--orange); border: 1px solid #FFA726; }
+    .tag-red    { background: #ffeaea; color: var(--red);    border: 1px solid #f0aaaa; }
+    .tag-gray   { background: #f4f4f4; color: #555;          border: 1px solid #ccc; }
+    .tag-yellow { background: #fff8d6; color: #7a6000;       border: 1px solid var(--yellow); }
+
+    /* ── Note box ── */
+    .note-box {
+      background: #fffbe6;
+      border-left: 3px solid var(--yellow);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #555;
+    }
+
+    .info-box {
+      background: #e8f7ff;
+      border-left: 3px solid var(--blue);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #333;
+    }
+
+    /* ── Screen mock ── */
+    .screen-mock {
+      background: var(--yellow);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mock-result {
+      background: #fff;
+      border-radius: 8px;
+      width: 100%;
+      padding: 18px;
+      text-align: center;
+      font-size: 36px;
+      font-weight: 800;
+      color: #111;
+      letter-spacing: -1px;
+    }
+
+    .mock-result.rolling { color: #BBBBBB; }
+
+    .mock-btn {
+      background: var(--blue);
+      border-radius: 8px;
+      width: 100%;
+      padding: 18px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      color: #111;
+    }
+
+    .mock-footer {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #555;
+    }
+
+    /* ── Flow diagram ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .flow-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #f8f8f8;
+      border-radius: 8px;
+      font-size: 13.5px;
+    }
+
+    .flow-arrow {
+      text-align: center;
+      color: #bbb;
+      font-size: 14px;
+      padding: 0 14px;
+    }
+
+    .flow-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .flow-text { flex: 1; line-height: 1.5; }
+    .flow-text strong { font-weight: 700; }
+    .flow-text span { font-size: 12px; color: var(--muted); display: block; }
+
+    /* ── Seat chip examples ── */
+    .chip-examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .chip-available { background: #e8f7ff; border: 1.5px solid var(--blue); color: var(--dark); }
+    .chip-drawn     { background: #f0f0f0; border: 1.5px solid #ccc;        color: #bbb; text-decoration: line-through; }
+    .chip-excluded  { background: #fff3e0; border: 1.5px solid #FFA726;     color: var(--orange); text-decoration: line-through; }
+
+    /* ── Divider ── */
+    hr {
+      border: none;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.75;
+      color: #333;
+    }
+
+    /* ── Footer ── */
+    .page-footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a class="back-link" href="settings.html">← 設定に戻る</a>
+    <h1>操作マニュアル</h1>
+  </div>
+
+  <div class="page">
+
+    <!-- ── 目次 ── -->
+    <div class="toc-card">
+      <div class="toc-title">目次</div>
+      <ul class="toc-list">
+        <li><a href="#overview"><span class="toc-num">1</span>このアプリについて</a></li>
+        <li><a href="#quickstart"><span class="toc-num">2</span>はじめてのセットアップ</a></li>
+        <li><a href="#main"><span class="toc-num">3</span>メイン画面の使い方</a></li>
+        <li><a href="#settings"><span class="toc-num">4</span>設定画面の使い方</a></li>
+        <li><a href="#status"><span class="toc-num">5</span>残席状況パネルの見方</a></li>
+        <li><a href="#popup"><span class="toc-num">6</span>抽選後のポップアップ</a></li>
+        <li><a href="#seat-page"><span class="toc-num">7</span>QR読み取り先の画面</a></li>
+        <li><a href="#tips"><span class="toc-num">8</span>よくある使い方・Tips</a></li>
+      </ul>
+    </div>
+
+    <!-- ── 1. このアプリについて ── -->
+    <div class="section-heading" id="overview">
+      <span class="num">1</span>
+      <h2>このアプリについて</h2>
+    </div>
+
+    <div class="content-card">
+      <p>
+        <strong>座席抽選アプリ</strong>は、イベントや教室などで座席番号をランダムに割り当てるためのツールです。<br>
+        スマートフォン・タブレット・PCのどのデバイスからでも使えます。
+      </p>
+
+      <div class="flow">
+        <div class="flow-item">
+          <span class="flow-icon">⚙️</span>
+          <div class="flow-text">
+            <strong>設定画面</strong>
+            <span>座席範囲・タイトル・表示形式を設定する（管理者用）</span>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-item">
+          <span class="flow-icon">🎰</span>
+          <div class="flow-text">
+            <strong>メイン画面</strong>
+            <span>「抽選」ボタンを押して座席番号をランダムに決定（当日運営用）</span>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-item">
+          <span class="flow-icon">📱</span>
+          <div class="flow-text">
+            <strong>ポップアップ / QR</strong>
+            <span>結果を大きく表示、またはQRコードで参加者に配布</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note-box">
+        設定はすべてブラウザの <strong>localStorage</strong>（端末内ストレージ）に保存されます。サーバーへのデータ送信は一切行いません。
+      </div>
+    </div>
+
+    <!-- ── 2. はじめてのセットアップ ── -->
+    <div class="section-heading" id="quickstart">
+      <span class="num">2</span>
+      <h2>はじめてのセットアップ</h2>
+    </div>
+
+    <div class="content-card">
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">1</span>
+          <div class="step-body">
+            メイン画面右下の <strong>⚙ 設定</strong> リンクをタップして設定画面を開きます。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong>タイトル</strong>（例: 「定期演奏会 座席抽選」）を入力します。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>セクション</strong> に座席の範囲を設定します。<br>
+            例: プレフィックス「A」、開始「1」、終了「30」→ A-1 〜 A-30 の30席が生成されます。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">4</span>
+          <div class="step-body">
+            必要に応じてオプション（アニメーション時間・ポップアップ形式など）を調整します。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <strong>設定を保存</strong> ボタンを押すとメイン画面に戻り、抽選できる状態になります。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3. メイン画面 ── -->
+    <div class="section-heading" id="main">
+      <span class="num">3</span>
+      <h2>メイン画面の使い方</h2>
+    </div>
+
+    <div class="content-card">
+      <!-- 画面モック -->
+      <div class="screen-mock">
+        <div style="font-size:16px; font-weight:800; color:#111;">定期演奏会 座席抽選</div>
+        <div class="mock-result">A-17</div>
+        <div class="mock-btn">抽選</div>
+        <div class="mock-footer">
+          <span>残り 13 / 30 席</span>
+          <span>⚙ 設定</span>
+        </div>
+      </div>
+
+      <table class="field-table">
+        <thead>
+          <tr>
+            <th>要素</th>
+            <th>説明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>タイトル</td>
+            <td>設定画面で入力したタイトルが表示されます。</td>
+          </tr>
+          <tr>
+            <td>結果表示エリア</td>
+            <td>抽選中はグレーの文字でランダムな番号が流れ、確定すると黒文字で大きく表示されます。</td>
+          </tr>
+          <tr>
+            <td>抽選ボタン</td>
+            <td>タップ・クリックで抽選を開始します。アニメーション中は無効になります。</td>
+          </tr>
+          <tr>
+            <td>残り表示</td>
+            <td>「残り X / Y 席」の形式で、残席数と全席数を表示します。</td>
+          </tr>
+          <tr>
+            <td>⚙ 設定</td>
+            <td>設定画面へのリンクです。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note-box">
+        全席が抽選済みになると「抽選ボタン」が非表示になり「抽選できる座席がありません」と表示されます。<strong>設定画面 → 履歴リセット</strong> で再抽選できます。
+      </div>
+    </div>
+
+    <!-- ── 4. 設定画面 ── -->
+    <div class="section-heading" id="settings">
+      <span class="num">4</span>
+      <h2>設定画面の使い方</h2>
+    </div>
+
+    <div class="content-card">
+      <p>設定画面は <strong>管理者専用</strong> の画面です。各項目を説明します。</p>
+
+      <hr>
+      <p><strong>タイトル</strong></p>
+      <p>メイン画面に表示するタイトルを入力します（最大40文字）。例:「第3回 座席抽選」</p>
+
+      <hr>
+      <p><strong>画像URL（省略可）</strong></p>
+      <p>
+        タイトルの上に表示するバナー画像のURLを入力します。<br>
+        入力後 <strong>適用</strong> ボタンを押すと、抽選履歴をリセットせずに画像だけ更新されます。<br>
+        空欄にすると画像は表示されません。
+      </p>
+
+      <hr>
+      <p><strong>セクション（座席範囲）</strong></p>
+      <table class="field-table">
+        <thead>
+          <tr><th>フィールド</th><th>説明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>プレフィックス</td>
+            <td>座席番号の先頭につく文字列。例: 「A」「VIP」。省略すると数字のみ（1, 2, 3…）になります。</td>
+          </tr>
+          <tr>
+            <td>区切り文字</td>
+            <td>プレフィックスと番号の間に入る文字。例: 「-」→ A-1。省略可。</td>
+          </tr>
+          <tr>
+            <td>開始番号</td>
+            <td>番号の最小値（例: 1）</td>
+          </tr>
+          <tr>
+            <td>終了番号</td>
+            <td>番号の最大値（例: 30）→ A-1 〜 A-30 の30席</td>
+          </tr>
+          <tr>
+            <td>桁数揃え</td>
+            <td>「2桁」を選ぶと A-01, A-02… のようにゼロ埋めされます。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="info-box">
+        <strong>複数セクション:</strong> 「＋ セクション追加」ボタンで、A列・B列のように異なる番号体系の席をまとめて管理できます。
+      </div>
+
+      <hr>
+      <p><strong>抽選アニメーション時間</strong></p>
+      <p>抽選ボタンを押してから結果が表示されるまでの演出時間を選択できます（0.5秒〜3秒）。</p>
+
+      <hr>
+      <p><strong>抽選後のポップアップ</strong></p>
+      <table class="field-table">
+        <thead>
+          <tr><th>モード</th><th>説明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-blue">🔳 QRコード</span></td>
+            <td>座席番号とQRコードを表示します。参加者がQRを読み取ると自分の席番号確認ページ（seat.html）が開きます。</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-gray">🔢 数字のみ</span></td>
+            <td>座席番号を大きく表示するのみ。QRコードは生成されません。スクリーン投影などに向いています。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr>
+      <p><strong>抽選済みを再抽選に含める</strong></p>
+      <p>ONにすると、一度抽選された座席も再び抽選対象になります。同じ席番号が複数回出る可能性があります。</p>
+
+      <hr>
+      <p><strong>席を追加（抽選中）</strong></p>
+      <p>
+        抽選開始後に席数を増やしたい場合に使います。<br>
+        通常の「設定を保存」と異なり、<strong>抽選済み・除外の履歴を保持したまま</strong>新しい席を追加できます。<br>
+        プレフィックス・区切り文字・開始/終了番号を入力して「＋ この席を追加する」を押します。
+      </p>
+
+      <hr>
+      <p><strong>設定を保存</strong></p>
+      <p>
+        すべての設定を保存してメイン画面に戻ります。<br>
+        抽選履歴または除外リストが存在する場合は確認ダイアログが表示されます。「OK」を押すと履歴がリセットされます。
+      </p>
+    </div>
+
+    <!-- ── 5. 残席状況 ── -->
+    <div class="section-heading" id="status">
+      <span class="num">5</span>
+      <h2>残席状況パネルの見方</h2>
+    </div>
+
+    <div class="content-card">
+      <p>設定画面下部の「残席状況」パネルで全座席の状態を一覧できます。</p>
+
+      <table class="field-table">
+        <thead>
+          <tr><th>色</th><th>状態</th><th>説明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-blue">青</span></td>
+            <td>残席（抽選待ち）</td>
+            <td>まだ抽選されていない席。タップすると除外できます。</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-red">赤字</span></td>
+            <td>抽選済み</td>
+            <td>すでに当選した席。取り消し線が入ります。タップ不可。</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-orange">オレンジ</span></td>
+            <td>除外</td>
+            <td>抽選対象から外した席。タップすると除外を解除できます。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="chip-examples">
+        <span class="chip chip-available">A-1</span>
+        <span class="chip chip-available">A-2</span>
+        <span class="chip chip-drawn">A-3</span>
+        <span class="chip chip-excluded">A-4</span>
+        <span class="chip chip-available">A-5</span>
+        <span class="chip chip-drawn">A-6</span>
+      </div>
+
+      <p>（上の例: A-3・A-6が抽選済み、A-4が除外、それ以外が残席）</p>
+
+      <hr>
+
+      <p><strong>サマリー（4つの数値）</strong></p>
+      <table class="field-table">
+        <thead>
+          <tr><th>表示</th><th>内容</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color:#1a9f4e; font-weight:800;">残り</span></td>
+            <td>抽選待ちの席数（全席 − 抽選済み − 除外）</td>
+          </tr>
+          <tr>
+            <td><span style="color:#cc4444; font-weight:800;">抽選済み</span></td>
+            <td>これまでに抽選された席数</td>
+          </tr>
+          <tr>
+            <td><span style="color:#E65100; font-weight:800;">除外</span></td>
+            <td>除外中の席数</td>
+          </tr>
+          <tr>
+            <td><span style="color:#555; font-weight:800;">合計</span></td>
+            <td>設定された全座席数</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note-box">
+        <strong>履歴リセット</strong> ボタンを押すと抽選済み履歴がクリアされ、全席が再び抽選待ちになります。除外リストは保持されます。
+      </div>
+    </div>
+
+    <!-- ── 6. ポップアップ ── -->
+    <div class="section-heading" id="popup">
+      <span class="num">6</span>
+      <h2>抽選後のポップアップ</h2>
+    </div>
+
+    <div class="content-card">
+      <p>抽選が確定すると自動的にポップアップが表示されます。設定画面の「抽選後のポップアップ」で2つのモードを切り替えられます。</p>
+
+      <hr>
+      <p><strong>🔳 QRコードモード</strong>（デフォルト）</p>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">1</span>
+          <div class="step-body">抽選確定後、座席番号とQRコードがポップアップに表示されます。</div>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <div class="step-body">参加者がスマートフォンでQRコードを読み取ります。</div>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <div class="step-body">読み取り先のページ（seat.html）で自分の席番号が大きく表示されます。スクリーンショットして保存できます。</div>
+        </div>
+      </div>
+
+      <hr>
+      <p><strong>🔢 数字のみモード</strong></p>
+      <p>
+        座席番号を画面いっぱいに大きく表示します。QRコードは生成されません。<br>
+        プロジェクターなど大画面で全員に見せる運用に向いています。<br>
+        ポップアップ右上の「閉じる」で閉じると次の抽選ができます。
+      </p>
+    </div>
+
+    <!-- ── 7. seat.html ── -->
+    <div class="section-heading" id="seat-page">
+      <span class="num">7</span>
+      <h2>QR読み取り先の画面</h2>
+    </div>
+
+    <div class="content-card">
+      <p>QRコードを読み取ると <code>seat.html?seat=A-17</code> のようなURLが開き、以下の情報が表示されます。</p>
+
+      <div class="screen-mock" style="min-height: 160px; justify-content: center;">
+        <div style="background:#fff; border-radius:16px; padding:32px 28px; text-align:center; display:flex; flex-direction:column; gap:8px; align-items:center; width:220px;">
+          <div style="font-size:13px; color:#555;">あなたの席番号は</div>
+          <div style="font-size:52px; font-weight:800; color:#111; line-height:1;">A-17</div>
+          <div style="font-size:13px; color:#555;">です</div>
+          <div style="font-size:10px; color:#999; margin-top:8px; line-height:1.5;">※スクリーンショット等で<br>ページを保存してお使いください</div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        参加者には「スクリーンショットで保存してください」と案内するとスムーズです。席に着くまで番号を確認できます。
+      </div>
+    </div>
+
+    <!-- ── 8. Tips ── -->
+    <div class="section-heading" id="tips">
+      <span class="num">8</span>
+      <h2>よくある使い方・Tips</h2>
+    </div>
+
+    <div class="content-card">
+      <div class="steps">
+        <div class="step">
+          <span class="step-num" style="background:#FFD84D; color:#111;">💡</span>
+          <div class="step-body">
+            <strong>数字のみの席番号にする</strong><br>
+            「プレフィックス」を空欄にすると「1」「2」「3」のような数字のみの番号になります。区切り文字も省略できます。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num" style="background:#FFD84D; color:#111;">💡</span>
+          <div class="step-body">
+            <strong>VIP席など特別な席を除外する</strong><br>
+            残席状況パネルで除外したい席をタップするとオレンジ表示になり抽選対象から外れます。再タップで解除できます。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num" style="background:#FFD84D; color:#111;">💡</span>
+          <div class="step-body">
+            <strong>途中で席数が足りなくなった場合</strong><br>
+            「席を追加（抽選中）」パネルから追加すると、それまでの抽選履歴を保持したまま席を増やせます。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num" style="background:#FFD84D; color:#111;">💡</span>
+          <div class="step-body">
+            <strong>複数のブロックがある会場に使う</strong><br>
+            セクションを複数追加すると「A-1〜A-30」「B-1〜B-20」のように、異なる番号体系をひとつのアプリで管理できます。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num" style="background:#FFD84D; color:#111;">💡</span>
+          <div class="step-body">
+            <strong>同じ端末で毎回使う場合のリセット</strong><br>
+            イベント終了後に設定画面の「履歴リセット」を押すだけで次のイベントに備えられます。設定はそのまま保持されます。
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-num" style="background:#FFD84D; color:#111;">💡</span>
+          <div class="step-body">
+            <strong>スマートフォンで大きく表示したい</strong><br>
+            スマートフォン・タブレット（タッチ操作）では「抽選」ボタンが自動的に大きく表示されます。PCと同じURLでそのまま使えます。
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="note-box">
+        <strong>データについて:</strong> すべての設定・履歴はお使いの端末のブラウザ内（localStorage）にのみ保存されます。ブラウザのキャッシュ・データを削除すると設定も消えますのでご注意ください。
+      </div>
+    </div>
+
+    <div class="page-footer">
+      座席抽選アプリ 操作マニュアル
+    </div>
+
+  </div>
+</body>
+</html>
