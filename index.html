@@ -429,8 +429,11 @@
       resultEl.classList.remove('empty', 'popped');
       resultEl.classList.add('rolling');
 
-      // Gradually increasing delays = decelerating slot machine
-      const delays = [50, 55, 60, 65, 70, 75, 80, 90, 105, 120, 145, 175, 215, 265, 330, 420];
+      // 設定値に応じてアニメーション時間を動的生成
+      const animMs = settings.animDuration || 1000;
+      const base   = [45, 56, 70, 88, 110, 137, 171, 214, 109]; // 合計1000ms
+      const scale  = animMs / 1000;
+      const delays = base.map(d => Math.round(d * scale));
 
       function step(i) {
         if (i >= delays.length) {

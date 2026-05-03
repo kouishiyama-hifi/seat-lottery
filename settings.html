@@ -350,6 +350,51 @@
     .small-reset-btn:hover { background: #fff0f0; }
     .small-reset-btn:disabled { border-color: #ccc; color: #ccc; cursor: default; background: none; }
 
+    /* ── Append seats button ── */
+    .append-btn {
+      background: #1a9f4e;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      transition: opacity 0.15s;
+    }
+
+    .append-btn:hover { opacity: 0.85; }
+
+    .append-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 2px solid #d4f0e0;
+    }
+
+    .append-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a9f4e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .append-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -6px;
+    }
+
     /* ── Segmented control ── */
     .segment {
       display: grid;
@@ -475,6 +520,20 @@
     <button class="add-btn" onclick="addSection()">＋ セクション追加</button>
 
     <div class="option-card">
+      <div class="field">
+        <label>抽選アニメーション時間</label>
+        <select id="animDuration">
+          <option value="500">0.5秒</option>
+          <option value="1000">1秒</option>
+          <option value="1500">1.5秒</option>
+          <option value="2000">2秒</option>
+          <option value="2500">2.5秒</option>
+          <option value="3000">3秒</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="option-card">
       <div style="margin-bottom:12px;">
         <div class="toggle-label-text" style="margin-bottom:10px;">抽選後のポップアップ</div>
         <div class="segment">
@@ -497,6 +556,40 @@
           <span class="toggle-track"></span>
         </label>
       </div>
+    </div>
+
+    <div class="append-card">
+      <div class="append-title">＋ 席を追加（抽選中）</div>
+      <div class="append-note">抽選済み・除外の履歴を保持したまま席を追加できます</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>プレフィックス</label>
+          <input type="text" id="addPrefix" placeholder="例: B（省略可）"
+            oninput="updateAddPreview()">
+        </div>
+        <div class="field">
+          <label>区切り文字</label>
+          <input type="text" id="addSeparator" value="-"
+            oninput="updateAddPreview()">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>開始番号</label>
+          <input type="number" id="addStart" value="1" min="0"
+            oninput="updateAddPreview()">
+        </div>
+        <div class="field">
+          <label>終了番号</label>
+          <input type="number" id="addEnd" value="10" min="0"
+            oninput="updateAddPreview()">
+        </div>
+      </div>
+
+      <div class="preview" id="addPreview"></div>
+      <button class="append-btn" onclick="appendSeats()">＋ この席を追加する</button>
     </div>
 
     <div class="status-card">
@@ -525,6 +618,7 @@
         title: '座席抽選',
         imageUrl: '',
         popupMode: 'qr',
+        animDuration: 1000,
         sections: [{ id: 1, prefix: 'A', separator: '-', start: 1, end: 30, zeroPad: 0 }],
         allowRepeat: false
       };
@@ -678,11 +772,12 @@
         localStorage.removeItem('excludedSeats');
       }
 
-      const allowRepeat = document.getElementById('allowRepeat').checked;
-      const title     = document.getElementById('titleInput').value.trim() || '座席抽選';
-      const imageUrl  = document.getElementById('imageUrlInput').value.trim();
-      const popupMode = document.querySelector('input[name="popupMode"]:checked').value;
-      localStorage.setItem('lotterySettings', JSON.stringify({ title, imageUrl, popupMode, sections, allowRepeat }));
+      const allowRepeat   = document.getElementById('allowRepeat').checked;
+      const title         = document.getElementById('titleInput').value.trim() || '座席抽選';
+      const imageUrl      = document.getElementById('imageUrlInput').value.trim();
+      const popupMode     = document.querySelector('input[name="popupMode"]:checked').value;
+      const animDuration  = parseInt(document.getElementById('animDuration').value) || 1000;
+      localStorage.setItem('lotterySettings', JSON.stringify({ title, imageUrl, popupMode, animDuration, sections, allowRepeat }));
       window.location.href = 'index.html';
     }
 
@@ -778,8 +873,63 @@
       updateImagePreview(settings.imageUrl || '');
       const mode = settings.popupMode || 'qr';
       document.querySelector(`input[name="popupMode"][value="${mode}"]`).checked = true;
+      document.getElementById('animDuration').value = settings.animDuration || 1000;
       render();
       renderStatus();
+    }
+
+    // ── Append seats (履歴保持) ──────────────────────────────────────────────
+
+    function updateAddPreview() {
+      const s = {
+        prefix:    document.getElementById('addPrefix').value,
+        separator: document.getElementById('addSeparator').value,
+        start:     parseInt(document.getElementById('addStart').value) || 1,
+        end:       parseInt(document.getElementById('addEnd').value)   || 1,
+        zeroPad:   0
+      };
+      document.getElementById('addPreview').innerHTML =
+        `<strong>プレビュー:</strong> ${previewText(s)}`;
+    }
+
+    function appendSeats() {
+      const prefix    = document.getElementById('addPrefix').value;
+      const separator = document.getElementById('addSeparator').value;
+      const start     = parseInt(document.getElementById('addStart').value) || 1;
+      const end       = parseInt(document.getElementById('addEnd').value)   || 1;
+
+      if (start > end) {
+        alert('開始番号が終了番号より大きいです。');
+        return;
+      }
+
+      const raw      = localStorage.getItem('lotterySettings');
+      const settings = raw ? JSON.parse(raw) : defaultSettings();
+      const newId    = Math.max(...settings.sections.map(s => s.id), 0) + 1;
+      settings.sections.push({ id: newId, prefix, separator, start, end, zeroPad: 0 });
+      localStorage.setItem('lotterySettings', JSON.stringify(settings));
+
+      // フォームに反映・ステータス更新
+      sections = settings.sections.map(s => ({ ...s }));
+      nextId   = Math.max(...sections.map(s => s.id), 0);
+      render();
+      renderStatus();
+
+      // フォームをリセット
+      document.getElementById('addPrefix').value    = '';
+      document.getElementById('addSeparator').value = '-';
+      document.getElementById('addStart').value     = '1';
+      document.getElementById('addEnd').value       = '10';
+      updateAddPreview();
+
+      // ボタンにフィードバック
+      const btn = document.querySelector('.append-btn');
+      btn.textContent = '✓ 追加しました';
+      btn.style.background = '#555';
+      setTimeout(() => {
+        btn.textContent = '＋ この席を追加する';
+        btn.style.background = '';
+      }, 1800);
     }
 
     // ── Image URL apply (履歴リセットなし) ──────────────────────────────────
@@ -821,6 +971,7 @@
     });
 
     init();
+    updateAddPreview();
   </script>
 </body>
 </html>
