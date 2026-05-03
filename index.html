@@ -7,9 +7,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
-      --yellow: #FFD84D;
-      --blue:   #5AC8FA;
-      --dark:   #111111;
+      --yellow:   #FFD84D;
+      --blue:     #5AC8FA;
+      --dark:     #111111;
+      --btn-text: #111111;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -125,7 +126,7 @@
       font-size: 48px;
       font-weight: 800;
       letter-spacing: 8px;
-      color: var(--dark);
+      color: var(--btn-text);
       cursor: pointer;
       width: 100%;
       font-family: inherit;
@@ -555,6 +556,13 @@
     function init() {
       const raw      = localStorage.getItem('lotterySettings');
       const settings = raw ? JSON.parse(raw) : defaultSettings();
+
+      // カラーテーマを適用
+      const root = document.documentElement;
+      if (settings.colorBg)      root.style.setProperty('--yellow',   settings.colorBg);
+      if (settings.colorBtn)     root.style.setProperty('--blue',     settings.colorBtn);
+      if (settings.colorBtnText) root.style.setProperty('--btn-text', settings.colorBtnText);
+
       document.getElementById('pageTitle').textContent = settings.title || '座席抽選';
       const heroImg = document.getElementById('heroImage');
       if (settings.imageUrl) {
