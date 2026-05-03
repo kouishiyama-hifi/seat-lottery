@@ -237,6 +237,34 @@
       letter-spacing: -1px;
     }
 
+    /* ── 数字のみモード ── */
+    .qr-label {
+      display: none;
+      font-size: 20px;
+      font-weight: 500;
+      color: #555;
+      order: 1;
+    }
+
+    .qr-card.number-only {
+      padding: 16px 28px 40px;
+      gap: 20px;
+      width: min(340px, 88vw);
+    }
+
+
+    .qr-card.number-only .qr-label {
+      display: block;
+      order: 1;
+    }
+
+    .qr-card.number-only .qr-seat {
+      font-size: 96px;
+      letter-spacing: -3px;
+      line-height: 1;
+      order: 2;
+    }
+
     .qr-code-wrap {
       background: #fff;
       padding: 8px;
@@ -254,20 +282,20 @@
     }
 
     .qr-close {
-      background: #F0F0F0;
+      background: none;
       border: none;
-      border-radius: 10px;
-      padding: 12px 32px;
-      font-size: 15px;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 14px;
       font-weight: 600;
-      color: #444;
+      color: #aaa;
       cursor: pointer;
       font-family: inherit;
-      width: 100%;
-      margin-top: 4px;
+      align-self: flex-end;
+      order: -1;
     }
 
-    .qr-close:hover { background: #E4E4E4; }
+    .qr-close:hover { background: #f0f0f0; color: #666; }
   </style>
 </head>
 <body>
@@ -295,11 +323,12 @@
   <!-- QR Modal -->
   <div class="qr-overlay" id="qrOverlay" onclick="closeQR()">
     <div class="qr-card" onclick="event.stopPropagation()">
+      <div class="qr-label">あなたの座席番号は</div>
       <div class="qr-seat" id="qrSeat"></div>
-      <div class="qr-code-wrap">
+      <div class="qr-code-wrap" id="qrCodeWrap">
         <div id="qrCode"></div>
       </div>
-      <div class="qr-hint">QRコードを読み取ると<br>席番号を確認できます</div>
+      <div class="qr-hint" id="qrHint">QRコードを読み取ると<br>席番号を確認できます</div>
       <button class="qr-close" onclick="closeQR()">閉じる</button>
     </div>
   </div>
@@ -469,17 +498,37 @@
     // ── QR Modal ─────────────────────────────────────────────────────────────
 
     function showQRModal(seat) {
-      document.getElementById('qrSeat').textContent = seat;
-      const container = document.getElementById('qrCode');
-      container.innerHTML = '';
-      const seatUrl = new URL('seat.html', window.location.href);
-      seatUrl.searchParams.set('seat', seat);
-      new QRCode(container, {
-        text: seatUrl.toString(),
-        width: 200,
-        height: 200,
-        correctLevel: QRCode.CorrectLevel.M
-      });
+      const raw      = localStorage.getItem('lotterySettings');
+      const settings = raw ? JSON.parse(raw) : defaultSettings();
+      const mode     = settings.popupMode || 'qr';
+
+      const card      = document.querySelector('.qr-card');
+      const codeWrap  = document.getElementById('qrCodeWrap');
+      const hint      = document.getElementById('qrHint');
+      const seatEl    = document.getElementById('qrSeat');
+
+      seatEl.textContent = seat;
+
+      if (mode === 'qr') {
+        card.classList.remove('number-only');
+        codeWrap.style.display = '';
+        hint.style.display     = '';
+        const container = document.getElementById('qrCode');
+        container.innerHTML = '';
+        const seatUrl = new URL('seat.html', window.location.href);
+        seatUrl.searchParams.set('seat', seat);
+        new QRCode(container, {
+          text: seatUrl.toString(),
+          width: 200,
+          height: 200,
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } else {
+        card.classList.add('number-only');
+        codeWrap.style.display = 'none';
+        hint.style.display     = 'none';
+      }
+
       document.getElementById('qrOverlay').classList.add('show');
     }
 

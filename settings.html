@@ -350,6 +350,36 @@
     .small-reset-btn:hover { background: #fff0f0; }
     .small-reset-btn:disabled { border-color: #ccc; color: #ccc; cursor: default; background: none; }
 
+    /* ── Segmented control ── */
+    .segment {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #EFEFEF;
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .segment input { display: none; }
+
+    .segment label {
+      display: block;
+      text-align: center;
+      padding: 9px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .segment input:checked + label {
+      background: #fff;
+      color: var(--dark);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
     /* ── Apply image button ── */
     .apply-btn {
       background: var(--blue);
@@ -445,6 +475,18 @@
     <button class="add-btn" onclick="addSection()">＋ セクション追加</button>
 
     <div class="option-card">
+      <div style="margin-bottom:12px;">
+        <div class="toggle-label-text" style="margin-bottom:10px;">抽選後のポップアップ</div>
+        <div class="segment">
+          <input type="radio" name="popupMode" id="modeQr" value="qr" checked>
+          <label for="modeQr">🔳 QRコード</label>
+          <input type="radio" name="popupMode" id="modeNumber" value="number">
+          <label for="modeNumber">🔢 数字のみ</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-card">
       <div class="toggle-row">
         <div>
           <div class="toggle-label-text">抽選済みを再抽選に含める</div>
@@ -482,6 +524,7 @@
       return {
         title: '座席抽選',
         imageUrl: '',
+        popupMode: 'qr',
         sections: [{ id: 1, prefix: 'A', separator: '-', start: 1, end: 30, zeroPad: 0 }],
         allowRepeat: false
       };
@@ -636,9 +679,10 @@
       }
 
       const allowRepeat = document.getElementById('allowRepeat').checked;
-      const title    = document.getElementById('titleInput').value.trim() || '座席抽選';
-      const imageUrl = document.getElementById('imageUrlInput').value.trim();
-      localStorage.setItem('lotterySettings', JSON.stringify({ title, imageUrl, sections, allowRepeat }));
+      const title     = document.getElementById('titleInput').value.trim() || '座席抽選';
+      const imageUrl  = document.getElementById('imageUrlInput').value.trim();
+      const popupMode = document.querySelector('input[name="popupMode"]:checked').value;
+      localStorage.setItem('lotterySettings', JSON.stringify({ title, imageUrl, popupMode, sections, allowRepeat }));
       window.location.href = 'index.html';
     }
 
@@ -732,6 +776,8 @@
       document.getElementById('titleInput').value    = settings.title    || '座席抽選';
       document.getElementById('imageUrlInput').value = settings.imageUrl || '';
       updateImagePreview(settings.imageUrl || '');
+      const mode = settings.popupMode || 'qr';
+      document.querySelector(`input[name="popupMode"][value="${mode}"]`).checked = true;
       render();
       renderStatus();
     }
